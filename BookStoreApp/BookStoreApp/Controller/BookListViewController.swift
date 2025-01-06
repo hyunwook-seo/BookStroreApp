@@ -23,6 +23,12 @@ class BookListViewController: UIViewController {
         setupActions()
         fetchBooks()
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        fetchBooks()
+        bookListView.collectionView.reloadData()
+    }
 
     private func setupCollectionView() {
         bookListView.collectionView.delegate = self
@@ -43,21 +49,22 @@ class BookListViewController: UIViewController {
     @objc private func clearAllBooks() {
         BookListManager.shared.deleteAllBooks()
         fetchBooks()
+        bookListView.collectionView.reloadData()
     }
 
     @objc private func addBookTapped() {
-//        let newBook = Book(
-//            title: "새 책",
-//            author: "저자",
-//            price: "10,000원",
-//            description: "책 설명",
-//            imageUrl: "https://via.placeholder.com/150"
-//        )
-//        BookListManager.shared.addBook(newBook)
-//        fetchBooks()
+        let newBook = Book(
+            title: "새 책",
+            author: "저자",
+            price: "10,000원",
+            description: "책 설명",
+            imageUrl: "https://via.placeholder.com/150"
+        )
+        BookListManager.shared.addBook(newBook)
+        fetchBooks()
+        bookListView.collectionView.reloadData()
     }
 
-    // 새로 추가된 reloadData 메서드
     func reloadData() {
         fetchBooks()
     }
@@ -82,5 +89,22 @@ extension BookListViewController: UICollectionViewDataSource, UICollectionViewDe
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
         return 20
+    }
+    func collectionView(_ collectionView: UICollectionView, trailingSwipeActionsConfigurationForItemAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let deleteAction = UIContextualAction(style: .destructive, title: "삭제") { [weak self] (_, _, completionHandler) in
+            guard let self = self else { return }
+            let bookToDelete = self.books[indexPath.row]
+
+            BookListManager.shared.deleteBook(bookToDelete)
+
+            self.books.remove(at: indexPath.row)
+
+            collectionView.deleteItems(at: [indexPath])
+
+            completionHandler(true)
+        }
+
+        deleteAction.backgroundColor = .red
+        return UISwipeActionsConfiguration(actions: [deleteAction])
     }
 }
